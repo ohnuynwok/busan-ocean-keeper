@@ -273,7 +273,7 @@
             <div>
               <div class="field">
                 <label for="region">2. 발견 위치 <span>(필수)</span></label>
-                <div class="location-row"><select id="region" required><option value="">지역 선택</option><option>해운대구</option><option>수영구(광안리)</option><option>영도구</option><option>사하구(다대포)</option><option>서구(송도)</option><option>기장군</option><option>부산항</option></select><button type="button" class="secondary" id="gpsBtn">⌖ GPS 자동 입력</button></div>
+                <div class="location-row"><select id="region" required><option value="">지역 선택</option><option>해운대구</option><option>수영구(광안리)</option><option>영도구</option><option>사하구(다대포)</option><option>서구(송도)</option><option>기장군</option><option>부산항</option></select></div>
                 <small id="gpsText" style="display:block;color:var(--muted);margin-top:7px">신고 화면을 열면 현재 위치를 자동으로 확인합니다.</small>
                 <div class="detail-location"><label for="locationDetail">상세 위치 <span>(선택)</span></label><input id="locationDetail" type="text" maxlength="100" list="locationSuggestions" autocomplete="off" placeholder="예: 미포 방파제 입구에서 오른쪽 약 30m"><datalist id="locationSuggestions"></datalist><small class="detail-help" id="detailGeoStatus">입력하면 해당 지역 안에서 지도 위치가 바로 이동합니다.</small></div>
                 <div class="report-map-shell">
@@ -719,7 +719,7 @@
       state.className='gps-state error';state.textContent='직접 선택 필요';if(!isAuto)toast('현재 위치를 가져오지 못했습니다.');
     },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
   }
-  $('#gpsBtn').addEventListener('click',()=>requestGPS(false));
+  $('#gpsBtn')?.addEventListener('click',()=>requestGPS(false));
   $('#region').addEventListener('change',e=>{if(e.target.value){selectRegion(e.target.value,'select');toast(e.target.value+' 지도로 이동했습니다. 상세 위치를 입력해 주세요.')}});
   $$('.region-pin').forEach(pin=>pin.addEventListener('click',e=>{e.stopPropagation();selectRegion(pin.dataset.region,'map');toast(pin.textContent+' 지역을 신고 위치로 선택했습니다.')}));
   function chooseMapPoint(clientX,clientY){
@@ -782,7 +782,7 @@
     if(!pendingReport||finalSubmitting)return;finalSubmitting=true;
     const now=new Date(), id='BS-'+now.toISOString().slice(0,10).replaceAll('-','')+'-'+String(Math.floor(1000+Math.random()*9000));
     const item={...pendingReport,id,status:'신고 접수',cls:'',created:now.toLocaleString('ko-KR'),riskScore:selectedRisk==='아니오'?28:78};
-    const all=getStored();all.unshift(item);const photoSaved=setStored(all);closeModals();
+    const compactItem={...item,photo:photoData.length<=700000?photoData:'',photoUnavailable:photoData.length>700000};const all=getStored();all.unshift(compactItem);const photoSaved=setStored(all);closeModals();
     $('#reportForm').reset();photoData='';photoLoading=false;uploadedFile=null;currentAI=null;$('#preview').hidden=true;$('#uploadPrompt').hidden=false;$('#uploadPrompt').innerHTML='<span class="upload-icon">⌁</span><b>현장 사진 추가</b><small>JPG, PNG, WEBP · 최대 10MB</small>';$('#aiResult').classList.remove('show');
     $('#statReports').textContent=24+all.length;
     showView('my');toast(`${id} 신고가 저장되었습니다.`);
