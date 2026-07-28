@@ -164,7 +164,7 @@
     .nav-btn span{font-size:20px}.nav-btn.active{color:var(--sea);font-weight:900}
     .nav-btn.report{position:relative}.nav-btn.report span{width:43px;height:43px;border-radius:15px;background:var(--navy);color:white;display:grid;place-items:center;margin-top:-25px;box-shadow:0 7px 18px rgba(6,63,83,.3)}
     .modal{position:fixed;z-index:80;inset:0;background:rgba(3,29,38,.58);display:none;align-items:end;justify-content:center;padding:16px}
-    .modal.show{display:flex}.modal-panel{background:white;border-radius:26px 26px 18px 18px;padding:22px;width:min(100%,520px);max-height:88vh;overflow:auto}
+    .modal.show{display:flex}.modal-panel{background:white;border-radius:26px 26px 18px 18px;padding:22px;width:min(100%,520px);max-height:88vh;overflow:auto;padding-bottom:calc(22px + env(safe-area-inset-bottom))}.modal-panel .primary.full{position:relative;z-index:2;min-height:52px}
     .modal-head{display:flex;align-items:center;justify-content:space-between}.modal-head h2{font-size:19px;margin:0}.close{border:0;background:#edf4f4;width:36px;height:36px;border-radius:12px}
     .emergency{background:#fff0ee;border:1px solid #f2c2bd;border-radius:17px;padding:16px;color:#823832;margin:15px 0;line-height:1.55;font-size:13px}
     .risk-warning-panel{width:min(100%,500px);border:3px solid #d32f2f;border-radius:16px;background:#fff1f1;padding:28px 24px;text-align:center;box-shadow:0 24px 64px rgba(89,23,23,.3)}
@@ -441,7 +441,7 @@
 </div>
 
 <div class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-  <div class="modal-panel"><div class="modal-head"><h2 id="confirmTitle">신고 내용 확인</h2><button class="close" data-close aria-label="닫기">×</button></div><div id="confirmContent"></div><button class="primary full" id="finalSubmit">이 내용으로 신고하기</button><button class="ghost full" data-close style="width:100%;margin-top:6px">수정하기</button></div>
+  <div class="modal-panel"><div class="modal-head"><h2 id="confirmTitle">신고 내용 확인</h2><button class="close" data-close aria-label="닫기">×</button></div><div id="confirmContent"></div><button class="primary full" id="finalSubmit" type="button">이 내용으로 신고하기</button><button class="ghost full" data-close style="width:100%;margin-top:6px">수정하기</button></div>
 </div>
 <div class="modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
   <div class="modal-panel"><div class="modal-head"><h2 id="detailTitle">신고 상세</h2><button class="close" data-close aria-label="닫기">×</button></div><div class="emergency"><b>⚠ 위험 물체로 추정됩니다</b><br>직접 만지거나 이동하지 말고 주변 접근을 막아주세요.</div><p><b>해운대 미포 방파제</b><br><span style="color:var(--muted);font-size:12px">폐어구 · 위험도 88점 · 긴급 신고</span></p><div class="progress-card" style="padding:5px 0"><div class="timeline"><i class="done">✓</i><b class="done"></b><i class="done">✓</i><b></b><i>3</i><b></b><i>4</i><b></b><i>5</i></div><div class="timeline-labels"><span>접수</span><span>확인</span><span>배정</span><span>수거</span><span>완료</span></div></div><a class="primary full" href="tel:119" style="text-decoration:none;background:#f4c7c2;color:#74342f;margin-top:18px">긴급 상황 119 전화 연결</a><div class="disclaimer">이 기능은 위험 가능성을 안내하는 프로토타입입니다. 실제 긴급 상황에서는 관계기관에 직접 연락해야 합니다.</div></div>
@@ -499,7 +499,7 @@
   $('#sideToggle').addEventListener('click',()=>setSidebarCollapsed(!$('.side').classList.contains('collapsed')));
   setSidebarCollapsed(false);
   function getStored(){try{return JSON.parse(localStorage.getItem('busanOceanReports')||'[]')}catch(e){return []}}
-  function setStored(v){localStorage.setItem('busanOceanReports',JSON.stringify(v))}
+  function setStored(v){try{localStorage.setItem('busanOceanReports',JSON.stringify(v));return true}catch(e){try{const compact=v.map(report=>({...report,photo:'',photoUnavailable:!!report.photo}));localStorage.setItem('busanOceanReports',JSON.stringify(compact));return false}catch(ignore){return false}}}
   function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2300)}
   const defaultPoints={balance:350,earned:425,used:75,activities:6,history:[
     {date:'2026.07.28',title:'폐어망 신고 완료',points:25,status:'수거 확인 완료'},
@@ -777,15 +777,19 @@
     $('#confirmContent').innerHTML=`<div class="notice"><b>ⓘ</b><span>입력한 내용은 이 기기에 저장됩니다. 실제 기관으로 전송되지는 않습니다.</span></div><p><b>발견 위치</b><br>${locationLine}</p><p><b>쓰레기 종류</b><br>${pendingReport.type}</p><p><b>AI 예상 쓰레기 양</b><br>${aiAmount}</p><p><b>위험 여부</b><br>${pendingReport.risk}</p>`;
     openModal('#confirmModal');
   });
-  $('#finalSubmit').addEventListener('click',()=>{
-    if(!pendingReport)return;
+  let finalSubmitting=false;
+  function completeReport(){
+    if(!pendingReport||finalSubmitting)return;finalSubmitting=true;
     const now=new Date(), id='BS-'+now.toISOString().slice(0,10).replaceAll('-','')+'-'+String(Math.floor(1000+Math.random()*9000));
     const item={...pendingReport,id,status:'신고 접수',cls:'',created:now.toLocaleString('ko-KR'),riskScore:selectedRisk==='아니오'?28:78};
-    const all=getStored();all.unshift(item);setStored(all);closeModals();
+    const all=getStored();all.unshift(item);const photoSaved=setStored(all);closeModals();
     $('#reportForm').reset();photoData='';photoLoading=false;uploadedFile=null;currentAI=null;$('#preview').hidden=true;$('#uploadPrompt').hidden=false;$('#uploadPrompt').innerHTML='<span class="upload-icon">⌁</span><b>현장 사진 추가</b><small>JPG, PNG, WEBP · 최대 10MB</small>';$('#aiResult').classList.remove('show');
     $('#statReports').textContent=24+all.length;
     showView('my');toast(`${id} 신고가 저장되었습니다.`);
-  });
+    pendingReport=null;setTimeout(()=>{finalSubmitting=false},350);
+  }
+  $('#finalSubmit').addEventListener('click',completeReport);
+  $('#finalSubmit').addEventListener('pointerup',e=>{if(e.pointerType==='touch'){e.preventDefault();completeReport()}});
   function reportHTML(r){
     const image=r.photo?`<img src="${r.photo}" alt="">`:r.icon||'≋';
     return `<article class="card report-item"><div class="thumb">${image}</div><div><h3>${r.region} · ${r.type}</h3><p>${r.id}${r.created?' · '+r.created:''}</p></div><span class="status ${r.cls||''}">${r.status}</span></article>`;
