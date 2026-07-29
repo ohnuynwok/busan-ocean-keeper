@@ -552,7 +552,7 @@
     if(/glass|broken|유리|병/.test(name))return aiScenarios.glass;
     if(/metal|sharp|금속/.test(name))return aiScenarios.metal;
     if(/net|fishing|rope|line|vpdjrn|폐어구|어망|낚싯줄|낚시줄|통발|그물/.test(name))return aiScenarios.net;
-    return aiScenarios.plastic;
+    return aiScenarios.unclear;
   }
   function varyAIResult(result,file){if(result.unclear||!file)return result;const seed=[file.name,file.size,file.lastModified].join('|').split('').reduce((sum,char)=>(sum*31+char.charCodeAt(0))>>>0,7);const sizes=['봉투 1개 미만','봉투 1~3개','봉투 4개 이상'];const teams=['일반 수거팀 배정','2인 수거팀 권장','차량 수거 검토'];const index=(Math.floor(file.size/220000)+(seed%3))%3;if(!result.warningLevel||result.warningLevel==='high'){result.amount=sizes[index];result.collection=teams[index]}const variation=(seed%13)-6;if(result.grade==='낮음')result.score=Math.max(8,Math.min(35,result.score+variation));else if(result.grade==='높음')result.score=Math.max(65,Math.min(88,result.score+variation));else if(result.grade==='긴급')result.score=Math.max(90,Math.min(99,result.score+variation));result.confidence=Math.max(82,Math.min(98,result.confidence+((seed>>3)%9)-4));return result}
   function renderAIResult(result){
