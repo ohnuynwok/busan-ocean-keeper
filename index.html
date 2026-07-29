@@ -623,6 +623,7 @@
     }catch(error){console.error('[AI] 분석 실패:',error.message);toast(error.name==='AbortError'?'분석 요청 시간이 초과되었습니다.':'AI 분석 오류: '+error.message)}finally{$('#loading').classList.remove('show')}
   });
   $('#demoTestBtn').addEventListener('click',async()=>{
+    if(!photoData){toast('먼저 현장 사진을 선택해 주세요.');return}
     $('#loading').classList.add('show');
     await new Promise(resolve=>setTimeout(resolve,1200));
     const result={...mockAnalysis};riskWarningAcknowledged=true;renderAIResult(result);$('#loading').classList.remove('show');toast('테스트 모드 결과를 표시했습니다.');
